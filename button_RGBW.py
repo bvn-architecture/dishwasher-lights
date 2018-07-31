@@ -1,7 +1,9 @@
 import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
+import argparse
 import time
 from neopixel import *
-from basicPubSub import myAWSIoTMQTTClient
+import logging
+from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 import json
 # Use BCM pin numbering
 GPIO.setmode(GPIO.BCM)
@@ -174,8 +176,8 @@ if __name__ == '__main__':
     GPIO.add_event_detect(PIN1, GPIO.FALLING, bouncetime=debounce_thresh)
     GPIO.add_event_detect(PIN2, GPIO.FALLING, bouncetime=debounce_thresh)
 
-    GPIO.add_event_callback(PIN2, press_left, myAWSIoTMQTTClient)
-    GPIO.add_event_callback(PIN1, press_right, myAWSIoTMQTTClient)
+    GPIO.add_event_callback(PIN2, press_left)
+    GPIO.add_event_callback(PIN1, press_right)
 
     print('Press Ctrl-C to quit.')
     while True:
