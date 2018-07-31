@@ -53,7 +53,7 @@ def press_right(channel):
         color = Color(0, 128, 0, 0)
     elif RIGHT_FLAG == 2:
         color = Color(0, 0, 128, 0)
-    rint("RIGHT button: {}".format(color))
+    print("RIGHT button: {}".format(color))
     for i in range(120, strip.numPixels()):
         strip.setPixelColor(i, color)
     strip.show()
