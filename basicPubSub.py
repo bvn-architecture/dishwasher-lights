@@ -111,14 +111,19 @@ time.sleep(2)
 
 # Publish to the same topic in a loop forever
 loopCount = 0
-while True:
-    if args.mode == 'both' or args.mode == 'publish':
-        message = {}
-        message['message'] = args.message
-        message['sequence'] = loopCount
-        messageJson = json.dumps(message)
-        myAWSIoTMQTTClient.publish(topic, messageJson, 1)
-        if args.mode == 'publish':
-            print('Published topic %s: %s\n' % (topic, messageJson))
-        loopCount += 1
-    time.sleep(1)
+if __name__ == "__main__":
+    while True:
+        if args.mode == 'both' or args.mode == 'publish':
+            dishwasher = input("left or right\n")
+            command = input('running, loading_dishes, lights_off\n')
+            message = {}
+            # if command == "g":
+            message['dishwasher'] = dishwasher
+            message['message'] = command
+            message['sequence'] = loopCount
+            messageJson = json.dumps(message)
+            myAWSIoTMQTTClient.publish(topic, messageJson, 1)
+            if args.mode == 'publish':
+                print('Published topic %s: %s\n' % (topic, messageJson))
+            loopCount += 1
+        time.sleep(1)
