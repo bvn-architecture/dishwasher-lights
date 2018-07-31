@@ -29,7 +29,7 @@ LEFT_FLAG = None
 
 def press_left(channel):
     """Callback for left dishwasher"""
-    print("button pushed")
+    
     global LEFT_FLAG
     if LEFT_FLAG == 0:
         color = Color(128, 0,0, 0)
@@ -37,7 +37,7 @@ def press_left(channel):
         color = Color(0, 128, 0, 0)
     elif LEFT_FLAG == 2:
         color = Color(0, 0, 128, 0)
-    print(color)
+    print("LEFT button: {}".format(color))
     for i in range(0,60):
         strip.setPixelColor(i, color)
     strip.show()
@@ -45,8 +45,7 @@ def press_left(channel):
 
 
 def press_right(channel):
-    """Callback for left dishwasher"""
-    print("button pushed")
+    """Callback for right dishwasher"""
     global RIGHT_FLAG
     if RIGHT_FLAG == 0:
         color = Color(128,0,0, 0)
@@ -54,7 +53,7 @@ def press_right(channel):
         color = Color(0, 128, 0, 0)
     elif RIGHT_FLAG == 2:
         color = Color(0, 0, 128, 0)
-    print(color)
+    rint("RIGHT button: {}".format(color))
     for i in range(120, strip.numPixels()):
         strip.setPixelColor(i, color)
     strip.show()
