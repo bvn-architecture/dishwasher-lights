@@ -2,11 +2,16 @@ import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 import time
 from neopixel import *
 
-# setup digital GPIOs for buttons
-# GPIO.setwarnings(False) # Ignore warning for now
-GPIO.setmode(GPIO.BCM) # Use physical pin numbering
-GPIO.setup(16, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # Set pin 10 to be an input pin and set initial value to be pulled low (off)
-GPIO.setup(26, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) 
+# Use BCM pin numbering
+GPIO.setmode(GPIO.BCM) 
+PIN1 = 14
+PIN2 = 15
+# 200 ms debounce cutoff 
+debounce_thresh = 200 
+GPIO.setmode(GPIO.BCM)
+# Set pins be input pins and set initial values to be pulled HIGH (ON)
+GPIO.setup(PIN1, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(PIN2, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 # setup RGBW LEDS
 LED_COUNT      = 180      # Number of LED pixels.
@@ -21,12 +26,13 @@ LED_STRIP      = ws.SK6812_STRIP_RGBW
 LEFT_FLAG = None
 LEFT_FLAG = None
 
+
 def press_left(channel):
     """Callback for left dishwasher"""
     print("button pushed")
     global LEFT_FLAG
     if LEFT_FLAG == 0:
-        color = Color(128,0,0, 0)
+        color = Color(128, 0,0, 0)
     elif LEFT_FLAG == 1:
         color = Color(0, 128, 0, 0)
     elif LEFT_FLAG == 2:
@@ -65,9 +71,15 @@ strip.begin()
 LEFT_FLAG = 0
 RIGHT_FLAG = 0
 color = (0,0,0,0)
-GPIO.add_event_detect(26, GPIO.FALLING, callback=press_left, bouncetime=700)
-GPIO.add_event_detect(16, GPIO.FALLING, callback=press_right, bouncetime=700)
+GPIO.add_event_detect(PIN1, GPIO.FALLING, bouncetime=debounce_thresh)
+GPIO.add_event_detect(PIN2, GPIO.FALLING, bouncetime=debounce_thresh)
+
+GPIO.add_event_callback(PIN2, press_left)
+GPIO.add_event_callback(PIN1, press_right)
 
 print('Press Ctrl-C to quit.')
 while True:
 	pass
+
+GPIO.cleanup()
+
