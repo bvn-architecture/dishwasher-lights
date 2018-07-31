@@ -48,6 +48,8 @@ def press_left(channel):
     for i in range(0,60):
         strip.setPixelColor(i, color)
     strip.show()
+    messageJson = json.dumps(message)
+    myAWSIoTMQTTClient.publish(topic, messageJson, 1)
     LEFT_FLAG = (LEFT_FLAG + 1) % 3
 
 
@@ -70,6 +72,8 @@ def press_right(channel):
     for i in range(120, strip.numPixels()):
         strip.setPixelColor(i, color)
     strip.show()
+    messageJson = json.dumps(message)
+    myAWSIoTMQTTClient.publish(topic, messageJson, 1)
     RIGHT_FLAG = (RIGHT_FLAG + 1) % 3
 
 
