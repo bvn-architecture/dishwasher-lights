@@ -19,23 +19,37 @@ from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 import logging
 import time
 import argparse
-import json
-import serial
 
 
-ser = serial.Serial(
-        '/dev/ttyACM0', 
-        baudrate=115200)
+class CallbackContainer(object):
 
-AllowedActions = ['both', 'publish', 'subscribe']
+    def __init__(self, client):
+        self._client = client
 
-# Custom MQTT message callback
-def customCallback(client, userdata, message):
-    print("Received a new message: ")
-    print(message.payload)
-    print("from topic: ")
-    print(message.topic)
-    print("--------------\n\n")
+    def messagePrint(self, client, userdata, message):
+        print("Received a new message: ")
+        print(message.payload)
+        print("from topic: ")
+        print(message.topic)
+        print("--------------\n\n")
+
+    def messageForward(self, client, userdata, message):
+        topicRepublish = message.topic + "/republish"
+        print("Forwarding message from: %s to %s" % (message.topic, topicRepublish))
+        print("--------------\n\n")
+        self._client.publishAsync(topicRepublish, str(message.payload), 1, self.pubackCallback)
+
+    def pubackCallback(self, mid):
+        print("Received PUBACK packet id: ")
+        print(mid)
+        print("++++++++++++++\n\n")
+
+    def subackCallback(self, mid, data):
+        print("Received SUBACK packet id: ")
+        print(mid)
+        print("Granted QoS: ")
+        print(data)
+        print("++++++++++++++\n\n")
 
 
 # Read in command-line parameters
@@ -49,11 +63,7 @@ parser.add_argument("-w", "--websocket", action="store_true", dest="useWebsocket
                     help="Use MQTT over WebSocket")
 parser.add_argument("-id", "--clientId", action="store", dest="clientId", default="basicPubSub",
                     help="Targeted client id")
-parser.add_argument("-t", "--topic", action="store", dest="topic", default="dishwasher_button", help="Targeted topic")
-parser.add_argument("-m", "--mode", action="store", dest="mode", default="both",
-                    help="Operation modes: %s"%str(AllowedActions))
-parser.add_argument("-M", "--message", action="store", dest="message", default="Hello World!",
-                    help="Message to publish")
+parser.add_argument("-t", "--topic", action="store", dest="topic", default="sdk/test/Python", help="Targeted topic")
 
 args = parser.parse_args()
 host = args.host
@@ -64,10 +74,6 @@ port = args.port
 useWebsocket = args.useWebsocket
 clientId = args.clientId
 topic = args.topic
-
-if args.mode not in AllowedActions:
-    parser.error("Unknown --mode option %s. Must be one of %s" % (args.mode, str(AllowedActions)))
-    exit(2)
 
 if args.useWebsocket and args.certificatePath and args.privateKeyPath:
     parser.error("X.509 cert authentication and WebSocket are mutual exclusive. Please pick one.")
@@ -109,30 +115,19 @@ myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
 myAWSIoTMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
 myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 
+myCallbackContainer = CallbackContainer(myAWSIoTMQTTClient)
+
 # Connect and subscribe to AWS IoT
 myAWSIoTMQTTClient.connect()
-if args.mode == 'both' or args.mode == 'subscribe':
-    myAWSIoTMQTTClient.subscribe(topic, 1, customCallback)
+
+# Perform synchronous subscribes
+myAWSIoTMQTTClient.subscribe(topic, 1, myCallbackContainer.messageForward)
+myAWSIoTMQTTClient.subscribe(topic + "/republish", 1, myCallbackContainer.messagePrint)
 time.sleep(2)
 
 # Publish to the same topic in a loop forever
 loopCount = 0
-if __name__ == "__main__":
-    while True:
-        if args.mode == 'both' or args.mode == 'publish':
-            data = ser.readline()
-            print(data)
-            # time.sleep(1)
-            # dishwasher = input("left or right\n")
-            # command = input('running, loading_dishes, lights_off\n')
-            # message = {}
-            # # if command == "g":
-            # message['dishwasher'] = dishwasher
-            # message['message'] = command
-            # message['sequence'] = loopCount
-            # messageJson = json.dumps(message)
-            # myAWSIoTMQTTClient.publish(topic, messageJson, 1)
-            # if args.mode == 'publish':
-            #     print('Published topic %s: %s\n' % (topic, messageJson))
-            # loopCount += 1
-        time.sleep(1)
+while True:
+    myAWSIoTMQTTClient.publishAsync(topic, "New Message " + str(loopCount), 1, ackCallback=myCallbackContainer.pubackCallback)
+    loopCount += 1
+    time.sleep(1)

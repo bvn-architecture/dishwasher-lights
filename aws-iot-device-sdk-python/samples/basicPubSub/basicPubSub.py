@@ -20,12 +20,6 @@ import logging
 import time
 import argparse
 import json
-import serial
-
-
-ser = serial.Serial(
-        '/dev/ttyACM0', 
-        baudrate=115200)
 
 AllowedActions = ['both', 'publish', 'subscribe']
 
@@ -49,7 +43,7 @@ parser.add_argument("-w", "--websocket", action="store_true", dest="useWebsocket
                     help="Use MQTT over WebSocket")
 parser.add_argument("-id", "--clientId", action="store", dest="clientId", default="basicPubSub",
                     help="Targeted client id")
-parser.add_argument("-t", "--topic", action="store", dest="topic", default="dishwasher_button", help="Targeted topic")
+parser.add_argument("-t", "--topic", action="store", dest="topic", default="sdk/test/Python", help="Targeted topic")
 parser.add_argument("-m", "--mode", action="store", dest="mode", default="both",
                     help="Operation modes: %s"%str(AllowedActions))
 parser.add_argument("-M", "--message", action="store", dest="message", default="Hello World!",
@@ -117,22 +111,14 @@ time.sleep(2)
 
 # Publish to the same topic in a loop forever
 loopCount = 0
-if __name__ == "__main__":
-    while True:
-        if args.mode == 'both' or args.mode == 'publish':
-            data = ser.readline()
-            print(data)
-            # time.sleep(1)
-            # dishwasher = input("left or right\n")
-            # command = input('running, loading_dishes, lights_off\n')
-            # message = {}
-            # # if command == "g":
-            # message['dishwasher'] = dishwasher
-            # message['message'] = command
-            # message['sequence'] = loopCount
-            # messageJson = json.dumps(message)
-            # myAWSIoTMQTTClient.publish(topic, messageJson, 1)
-            # if args.mode == 'publish':
-            #     print('Published topic %s: %s\n' % (topic, messageJson))
-            # loopCount += 1
-        time.sleep(1)
+while True:
+    if args.mode == 'both' or args.mode == 'publish':
+        message = {}
+        message['message'] = args.message
+        message['sequence'] = loopCount
+        messageJson = json.dumps(message)
+        myAWSIoTMQTTClient.publish(topic, messageJson, 1)
+        if args.mode == 'publish':
+            print('Published topic %s: %s\n' % (topic, messageJson))
+        loopCount += 1
+    time.sleep(1)
